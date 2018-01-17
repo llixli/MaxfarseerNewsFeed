@@ -1,3 +1,5 @@
+'use strict';
+
 var my_news = [
   {
     author: 'Саша Печкин',
@@ -15,6 +17,8 @@ var my_news = [
     bigText: 'На самом деле платно, просто нужно прочитать очень длинное лицензионное соглашение'
   }
 ];
+
+window.ee = new EventEmitter();
 
 
 var News = React.createClass({
@@ -118,45 +122,52 @@ var Add = React.createClass({
 	
 	onBtnClickHandler: function(e) {
 		e.preventDefault();
+
+		var textEl = ReactDOM.findDOMNode(this.refs.text);
 		var author = ReactDOM.findDOMNode(this.refs.author).value;
 		var text = ReactDOM.findDOMNode(this.refs.text).value;
-		alert(author + '\n' + text);
+		
+		var item = [{
+			author: author,
+			text: text,
+			bigText: '...'
+		}];
+
+		window.ee.emit('News.add', item);
+
+		textEl.value = '';
+		this.setState({textIsEmpty: true});
 	},
 
 	onCheckRuleClick: function(e) {
 		this.setState({agreeNotChecked: !this.state.agreeNotChecked});
 	},
 
-	onAuthorChange: function(e) {
+	onFieldChange: function(fieldName, e) {
 		if (e.target.value.trim().length > 0) {
-			this.setState({authorIsEmpty: false});
+			this.setState({[''+fieldName]:false})
 		} else {
-			this.setState({authorIsEmpty: true});
-		} 
-	},
-
-	onTextChange: function(e) {
-		if (e.target.value.trim().length > 0) {
-			this.setState({textIsEmpty: false});
-		} else {
-			this.setState({textIsEmpty: true});
+			this.setState({[''+fieldName]:true})
 		}
 	},
 
 	render: function() {
+		var agreeNotChecked = this.state.agreeNotChecked,
+			authorIsEmpty = this.state.authorIsEmpty,
+			textIsEmpty = this.state.textIsEmpty;
 		return (
 			<form className='add cf'>
 				<input 
 					type='text' 
 					className='add__author' 
-					onChange={this.onAuthorChange}
+					onChange={this.onFieldChange.bind(this, 'authorIsEmpty')}
 					placeholder='Your name'
 					ref='author'
 				/>
 
 				<textarea
 					className='add__text'
-					onChange={this.onTextChange}
+					onChange={this.onFieldChange.bind(this, 'textIsEmpty')}
 					placeholder='News text'
 					ref='text'
 				></textarea>
@@ -174,7 +185,7 @@ var Add = React.createClass({
 					onClick={this.onBtnClickHandler}
 					ref='alert_button'
 					disabled={agreeNotChecked || authorIsEmpty || textIsEmpty}>
-					Show alert
+					Add news
 				</button>				
 			</form>
 		);
@@ -182,12 +193,31 @@ var Add = React.createClass({
 });
 
 var App = React.createClass({
+	getInitialState: function() {
+		return {
+			news: my_news
+		};
+	},
+
+	componentDidMount: function() {
+		var self = this;
+		window.ee.addListener('News.add', function(item) {
+			var nextNews = item.concat(self.state.news);
+			self.setState({news: nextNews});
+		});
+	},
+
+	componentWillUnmount: function() {
+		window.ee.removeListener('News.add');
+	},
+
 	render: function() {
+		console.log('render');
 		return (
 			<div className="App">
-				<h3>News</h3>
 				<Add />
-				<News data={my_news}/> {/*add option data */}
+				<h3>News</h3>
+				<News data={this.state.news}/> {/*add option data */}
 			</div>
 		);
 	}
