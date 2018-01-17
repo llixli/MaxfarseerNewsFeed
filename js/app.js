@@ -103,34 +103,80 @@ var Article = React.createClass({
 });
 
 
-var TestInput = React.createClass({
+var Add = React.createClass({
 	getInitialState: function() {
 		return {
-			myValue: ''
+			agreeNotChecked: true,
+			authorIsEmpty: true,
+			textIsEmpty: true
+		};
+	},
+
+	componentDidMount: function() {
+		ReactDOM.findDOMNode(this.refs.author).focus();
+	},
+	
+	onBtnClickHandler: function(e) {
+		e.preventDefault();
+		var author = ReactDOM.findDOMNode(this.refs.author).value;
+		var text = ReactDOM.findDOMNode(this.refs.text).value;
+		alert(author + '\n' + text);
+	},
+
+	onCheckRuleClick: function(e) {
+		this.setState({agreeNotChecked: !this.state.agreeNotChecked});
+	},
+
+	onAuthorChange: function(e) {
+		if (e.target.value.trim().length > 0) {
+			this.setState({authorIsEmpty: false});
+		} else {
+			this.setState({authorIsEmpty: true});
+		} 
+	},
+
+	onTextChange: function(e) {
+		if (e.target.value.trim().length > 0) {
+			this.setState({textIsEmpty: false});
+		} else {
+			this.setState({textIsEmpty: true});
 		}
-	},
-
-	onChangeHandler: function(e) {
-		this.setState({myValue: e.target.value})
-	},
-
-	onBtnClickHandler: function() {
-		alert(this.state.myValue);
 	},
 
 	render: function() {
 		return (
-			<div>
-				<input className='test-input' 
-					value={this.state.myValue}
-					onChange={this.onChangeHandler}
-					placeholder='input value' 
+			<form className='add cf'>
+				<input 
+					type='text' 
+					className='add__author' 
+					onChange={this.onAuthorChange}
+					placeholder='Your name'
+					ref='author'
 				/>
 
-				<button onClick={this.onBtnClickHandler}>
-					Make alert
-				</button>
-			</div>
+				<textarea
+					className='add__text'
+					onChange={this.onTextChange}
+					placeholder='News text'
+					ref='text'
+				></textarea>
+
+				<label className='add__checkrule'>
+					<input 
+						type='checkbox'
+						ref='checkrule' 
+						onChange={this.onCheckRuleClick}/> 
+						I agree with rules
+				</label>
+				
+				<button
+					className='add__btn'
+					onClick={this.onBtnClickHandler}
+					ref='alert_button'
+					disabled={agreeNotChecked || authorIsEmpty || textIsEmpty}>
+					Show alert
+				</button>				
+			</form>
 		);
 	}
 });
@@ -140,7 +186,7 @@ var App = React.createClass({
 		return (
 			<div className="App">
 				<h3>News</h3>
-				<TestInput />
+				<Add />
 				<News data={my_news}/> {/*add option data */}
 			</div>
 		);
